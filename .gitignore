@@ -67,3 +67,11 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Runtime database (created by the app; never commit user data)
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+main.program
+*.dSYM
