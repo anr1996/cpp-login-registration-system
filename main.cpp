@@ -1,7 +1,8 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <string_view>
-#include <hasher.hpp>
+#include "hasher.hpp"
 
 // enum to assign an int value to user input
 enum class Action {
@@ -38,10 +39,52 @@ int main() {
 			case Action::loginIn:
 				std::cout << "Login selected (not built yet)\n";
 				break;
+			
+			// Handle account Registration.
+			case Action::registerAccount: {
+				bool usernameTaken = false;
+				std::string username, password;
+				while(!usernameTaken){
 
-			case Action::registerAccount:
-				std::cout << "Register selected (not built yet)\n";
+					std::cout << "Enter a username ";
+					std::cin >> username;
+					
+					std::ifstream checkFile("data.txt");
+					std::string existingUsername, existingHash;
+					
+					if (checkFile.peek() == std::ifstream::traits_type::eof()){
+						usernameTaken = true;
+					}
+					
+					while (checkFile >> existingUsername >> existingHash) {
+						if (existingUsername == username) {
+							std::cout << "Username is already taken.\n";
+							break;
+						} else {
+							usernameTaken = true;
+						}
+					};
+						
+						checkFile.close();
+				}
+				
+				std::cout << "Enter a password ";
+				std::cin >> password;
+				std::string hashedPassword = hashPassword(password);
+
+				
+				std::ofstream outFile("data.txt", std::ios::app);
+				if (!outFile) {
+					std::cout << "Error: could not open data.txt for writing";					
+					break;
+				}
+				
+				outFile << username << " " << hashedPassword << "\n";
+				outFile.close();
+				
+				std::cout << "Account creation successful\n"; 
 				break;
+			}
 			
 			case Action::exitUI:
 				std::cout << "Exiting...\n";
