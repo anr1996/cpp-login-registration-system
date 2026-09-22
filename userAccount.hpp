@@ -5,6 +5,12 @@
 
 namespace userSettings {
 
+/*
+user class for created and verifying the following information:
+- username
+- email
+- password
+*/
 class userAccount {
 	private:
 		std::string username_;
