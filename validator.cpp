@@ -24,4 +24,9 @@ namespace validator {
 		return std::regex_match(email, pattern);
 	}
 
+	bool InitAccountValidator (const std::string& user_, const std::string& email_, const std::string& pass_) {
+		return isValidUsername(user_) && isValidEmail(email_) && isValidPassword(pass_);
+		
+	}
+
 }

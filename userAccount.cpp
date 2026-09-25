@@ -4,25 +4,25 @@
 
 namespace userSettings {
 
-userAccount::userAccount(std::string u, std::string p, std::string e)
-	: username_(std::move(u))
-	, password_(std::move(p))
-	, email_(std::move(e))
+userAccount::userAccount(std::string newUser, std::string newEmail, std::string newPass)
+	: username_(std::move(newUser))
+	, email_(std::move(newEmail))
+	, password_(std::move(newPass))
 {
 	
 }
 
-bool userAccount::set_username(std::string u) {
-	if (u.empty()) return  false;
-	if (!(validator::isValidUsername(u))) return false;  	
-	username_ = std::move(u);
+bool userAccount::set_username(std::string user) {
+	if (user.empty()) return  false;
+	if (!(validator::isValidUsername(user))) return false;  	
+	username_ = std::move(user);
 	return true;
 }
 
-bool userAccount::set_email(std::string e) {
-	if (e.empty()) return false;	
-	if (!(validator::isValidEmail(e))) return false;  	
-	email_ = std::move(e);
+bool userAccount::set_email(std::string email) {
+	if (email.empty()) return false;	
+	if (!(validator::isValidEmail(email))) return false;  	
+	email_ = std::move(email);
 	return true;
 }
 

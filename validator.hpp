@@ -12,4 +12,8 @@ namespace validator {
 		
 	// bool function checks for valid email
 	bool isValidEmail(const std::string& email);
+
+	// Account creation validator checks all three parameters: username, email, password.	
+	bool InitAccountValidator (const std::string& user_, const std::string& email_, const std::string& pass_);
+	
 } // namespace validator
