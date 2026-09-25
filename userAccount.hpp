@@ -24,7 +24,8 @@ class userAccount {
 	// getter functions
 	[[nodiscard]] std::string_view get_username() const noexcept {return username_;}
 	[[nodiscard]] std::string_view get_email() const noexcept {return email_;}
-	
+	[[nodiscard]] std::string_view get_pass() const noexcept {return password_;}
+		
 	// setter functions
 	bool set_username(std::string user);
 	bool set_email(std::string email);

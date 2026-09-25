@@ -219,13 +219,24 @@ void LoginPanel::OnLoginClick(wxCommandEvent & /*event*/) {
 	const wxString user = userInput_->GetValue();
 	const wxString pass = passInput_->GetValue();
 
+	// Testing code only below:
+	/*
+	const wxString test_email = "anrich250@gmail.com";	
+	const wxString test_user = "adrian";
+	const wxString test_pass = "test";
+	const userSettings::userAccount* NewUserAccount = MainFrame::getRegistry().create(test_user.ToStdString(), test_email.ToStdString(), test_pass.ToStdString());
+	*/
 
-	// wire in login logic here.
-        // const bool success = validateLogin(validateLogin.user.ToStdString(), pass.ToStdString());
-	// test value
-	const bool success = true;
-	if (success) {
-		MainFrame::ShowLongMessage("Login successful.", wxOK | wxICON_INFORMATION, "success");
+	const userSettings::userAccount* accountFound = MainFrame::getRegistry().find(user.ToStdString()); 
+
+	if (accountFound != nullptr) {
+		
+		if (wxString::FromUTF8(accountFound->get_pass()) == pass) {
+			MainFrame::ShowLongMessage("Login successful.", wxOK | wxICON_INFORMATION, "success");
+		} else {
+			MainFrame::ShowLongMessage("Password or username is incorrect.", wxOK | wxICON_ERROR, "failure");
+		}
+
 	} else {
 		MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, "failure");
 	} 
@@ -288,15 +299,14 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 	const wxString pass = passInput_->GetValue();
 	
 	const bool validUserInfo =  validator::InitAccountValidator (user.ToStdString(), email.ToStdString(), pass.ToStdString());
-	bool success = false;
-
 	const userSettings::userAccount* NewUserAccount = MainFrame::getRegistry().create(user.ToStdString(), email.ToStdString(), pass.ToStdString());
-	if (validUserInfo  && (NewUserAccount != nullptr)) {
-	success = true;
-	}
-	
-	if (success) {
+
+	if (validUserInfo && (NewUserAccount != nullptr)) {
 		MainFrame::ShowLongMessage("Registration successful.", wxOK | wxICON_INFORMATION,"success");
+	
+	} else if (validUserInfo && (NewUserAccount == nullptr)) {
+		MainFrame::ShowLongMessage("Registration failed", wxOK | wxICON_ERROR, "The username is already taken.");
+	
 	} else {
 		MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR,
 			     "Username must be 3 to 30 characters long."
