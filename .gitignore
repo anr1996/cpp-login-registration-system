@@ -75,3 +75,6 @@ Testing/
 *.db-journal
 main.program
 *.dSYM
+.codewhale/
+login
+data.txt
