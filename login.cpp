@@ -1,8 +1,13 @@
-#include "userRegistry.hpp"
+#include "postgresUserRepository.hpp"
 #include "validator.hpp"
 #include <wx/artprov.h>
 #include <wx/statline.h>
 #include <wx/wx.h>
+
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <optional>
 
 namespace definedVar {
 constexpr int BORDER_WIDTH = 5;
@@ -17,10 +22,6 @@ constexpr int mainSizer_BORDER_WIDTH_ = 10;
 constexpr int BtnRow_WIDTH = 10;
 } // namespace definedVar
 
-// unordered map for the user registry
-// userRegistry registry;
-			
-// LoginFrame the actual window the user sees
 class MainFrame;
 
 class WelcomePanel : public wxPanel {
@@ -100,9 +101,9 @@ public:
 
 	
 		
-	static userAccRegistry::userRegistry& getRegistry(){
-		static userAccRegistry::userRegistry instance;
-		return instance;
+	static userAccRegistry::userRepository& getRegistry() {
+		static const std::unique_ptr<userAccRegistry::userRepository> instance = userAccRegistry::makePostgresUserRepository();
+		return *instance;
 	}		
 	
 	static void ShowLongMessage(const wxString& title, int64_t style, const wxString& message) {
@@ -218,20 +219,21 @@ LoginPanel::LoginPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent)
 void LoginPanel::OnLoginClick(wxCommandEvent & /*event*/) {
 	const wxString user = userInput_->GetValue();
 	const wxString pass = passInput_->GetValue();
-
-	std::optional<userSettings::userAccount> accountFound = MainFrame::getRegistry().find(user.ToStdString()); 
-
-	if (accountFound) {
-		
-		if ((accountFound->check_password(pass.ToStdString()))) {
+	
+	try {
+		const std::optional<userSettings::userAccount> accountFound = MainFrame::getRegistry().find_name(user.ToStdString());
+		if (accountFound && accountFound->check_password(pass.ToStdString())) {
 			MainFrame::ShowLongMessage("Login successful.", wxOK | wxICON_INFORMATION, "success");
 		} else {
-			MainFrame::ShowLongMessage("Password or username is incorrect.", wxOK | wxICON_ERROR, "failure");
-		}
+			MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, "Username or password is incorrect.");
+		} 
 
-	} else {
-		MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, "failure");
-	} 
+		
+	} catch (const std::exception &e) {
+		std::cerr << "Database error: " << e.what() << "\n";
+		MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, "Could not reach the database. Please try again.");
+	}
+
 }
 
 void LoginPanel::OnBackClick(wxCommandEvent & /*event*/){
@@ -280,15 +282,9 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 	const wxString pass = passInput_->GetValue();
 	
 	const bool validUserInfo =  validator::InitAccountValidator (user.ToStdString(), email.ToStdString(), pass.ToStdString());
-	const userSettings::userAccount* NewUserAccount = MainFrame::getRegistry().create(user.ToStdString(), email.ToStdString(), pass.ToStdString());
+	
 
-	if (validUserInfo && (NewUserAccount != nullptr)) {
-		MainFrame::ShowLongMessage("Registration successful.", wxOK | wxICON_INFORMATION,"success");
-	
-	} else if (validUserInfo && (NewUserAccount == nullptr)) {
-		MainFrame::ShowLongMessage("Registration failed", wxOK | wxICON_ERROR, "The username is already taken.");
-	
-	} else {
+	if (!validUserInfo) {
 		MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR,
 			     "Username must be 3 to 30 characters long."
 			     "It can contain letters, numbers, underscores '_', dots'.', and hyphens'-'."
@@ -299,7 +295,41 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 			     "The part after the @ must include a domain and an ending such as .com, .org, or .co.uk (atleast 2 letters)."
 			     "The password must be 12 to 128 characters long."
 			     "Any character is allowed.");
+		return;
 	}
+	
+	try {  
+		const std::optional<userSettings::userAccount> newAccount = MainFrame::getRegistry().create(user.ToStdString(), email.ToStdString(), pass.ToStdString());
+		/*
+		const std::optional<userSettings::userAccount> nameFound = MainFrame::getRegistry().find_name(user.ToStdString());
+		const std::optional<userSettings::userAccount> emailFound = MainFrame::getRegistry().find_email(user.ToStdString());
+
+		if (!(nameFound && emailFound)) {
+			
+			MainFrame::ShowLongMessage("Registration successful.", wxOK | wxICON_INFORMATION, "success");
+		
+		} else if (nameFound || emailFound) {
+		
+			MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR, "That username or email is already registered");
+
+		}
+		*/ 
+		
+		if (newAccount) {
+		
+			MainFrame::ShowLongMessage("Registration successful.", wxOK | wxICON_INFORMATION, "success");
+
+		} else {	
+			
+			MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR, "That username or email is already registered");
+
+		} 
+		
+	} catch (const std::exception &e) {
+		std::cerr << "Database error: " << e.what() << "\n";
+		MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR, "Could not reach the database. Please try again.");
+	  }
+
 
 
 }
