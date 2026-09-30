@@ -1,12 +1,12 @@
 #include "userRegistry.hpp"
 
 namespace userAccRegistry {
-userSettings::userAccount* userRegistry::create(std::string name, std::string password, std::string email) {
+userSettings::userAccount* userRegistry::create(std::string name, std::string email, std::string password) {
 	if (by_name_.contains(name)) {
 		return nullptr;
 	}
 	
-	auto acct = std::make_unique<userSettings::userAccount>(std::move(name), std::move(password), std::move(email));
+	auto acct = std::make_unique<userSettings::userAccount>(std::move(name), std::move(email), std::move(password));
 	
 	userSettings::userAccount* raw = acct.get();
 	by_name_.emplace(std::string(raw->get_username()), std::move(acct));

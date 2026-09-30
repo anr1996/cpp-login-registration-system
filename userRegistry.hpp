@@ -1,36 +1,27 @@
 #pragma once
 
 #include "userAccount.hpp"
-#include <cstddef>
-#include <functional>
-#include <memory>
+
+#include <optional>
 #include <string>
 #include <string_view>
-#include <unordered_map>
-#include <utility>
-
-struct TransparentStringHash {
-    using is_transparent = void;
-
-    std::size_t operator()(std::string_view view) const noexcept { // NOLINT(fuchsia-overloaded-operator)
-        return std::hash<std::string_view>{}(view);
-    }
-};
 
 namespace userAccRegistry {
-class userRegistry {
+
+/*
+Interface for anything that can store and look up user accounts.
+It says what a storage backend must do, not how it does it.
+*/
+class userRepository {
+public:
+	virtual ~UserRepository() = default;
+
+	// Creates and stores a new account (the password gets hashed).
+	// Returns the new account, or std:::nullopt if the username or email is already in use.
+	virtual std::option<userSettings::userAccount> create(std::string name, std::string email, std::string password) = 0;
 	
-	private:
-		std::unordered_map<std::string, std::unique_ptr<userSettings::userAccount>, TransparentStringHash, std::equal_to<>>by_name_;
-	
-	public:
-		// Returns a non-owning pointer to the new account, or nullptr if the username is taken.
-		// the caller must not delete it.
-		userSettings::userAccount* create(std::string name, std::string password, std::string email);
-		
-		// Returns a non-owning pointer, or nullptr if not found.
-		userSettings::userAccount* find(std::string_view name);
-		
+	// Returns the account with this username, or std::nullopt if there is none.
+	virtual std::optional<userSettings::userAccount> find(std::string_view name) = 0;
 };
 
 } // namespace userAccRegistry

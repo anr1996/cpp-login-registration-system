@@ -1,15 +1,29 @@
 #include "userAccount.hpp"
 #include <utility>
 #include "validator.hpp"
+#include "hasher.hpp"
 
 namespace userSettings {
 
 userAccount::userAccount(std::string newUser, std::string newEmail, std::string newPass)
 	: username_(std::move(newUser))
 	, email_(std::move(newEmail))
+	, password_(hashPassword(newPass))
+{
+	
+}
+
+userAccount::userAccount(std::string newUser, std::string newEmail, std::string newPass, AlreadyHashedTag)
+	: username_(std::move(newUser))
+	, email_(std::move(newEmail))
 	, password_(std::move(newPass))
 {
 	
+}
+
+userAccount userAccount::fromStoredHash(std::string user, std::string email, std::string pass)
+{
+	return userAccount(std::move(user), std::move(email), std::move(pass), AlreadyHashedTag{});
 }
 
 bool userAccount::set_username(std::string user) {
@@ -30,10 +44,15 @@ bool userAccount::change_password(std::string_view old_password, std::string new
 	if (!check_password(old_password)) return false;
 	if (new_password.empty()) return false;
 	if (!(validator::isValidPassword(new_password))) return false;
-	password_ = std::move(new_password);
+	password_ = hashPassword(new_password);
 	return true;
 }
 
+bool userAccount::check_password(std::string_view attempt) const {
+	return verifyPassword(std::string(attempt), password_);
 }
+
+}
+
  
 

@@ -219,19 +219,11 @@ void LoginPanel::OnLoginClick(wxCommandEvent & /*event*/) {
 	const wxString user = userInput_->GetValue();
 	const wxString pass = passInput_->GetValue();
 
-	// Testing code only below:
-	/*
-	const wxString test_email = "anrich250@gmail.com";	
-	const wxString test_user = "adrian";
-	const wxString test_pass = "test";
-	const userSettings::userAccount* NewUserAccount = MainFrame::getRegistry().create(test_user.ToStdString(), test_email.ToStdString(), test_pass.ToStdString());
-	*/
+	std::optional<userSettings::userAccount> accountFound = MainFrame::getRegistry().find(user.ToStdString()); 
 
-	const userSettings::userAccount* accountFound = MainFrame::getRegistry().find(user.ToStdString()); 
-
-	if (accountFound != nullptr) {
+	if (accountFound) {
 		
-		if (wxString::FromUTF8(accountFound->get_pass()) == pass) {
+		if ((accountFound->check_password(pass.ToStdString()))) {
 			MainFrame::ShowLongMessage("Login successful.", wxOK | wxICON_INFORMATION, "success");
 		} else {
 			MainFrame::ShowLongMessage("Password or username is incorrect.", wxOK | wxICON_ERROR, "failure");
@@ -266,17 +258,6 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	auto *registerBtn = new wxButton(this, wxID_ANY, "Register", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
 	auto *backBtn = new wxButton(this, wxID_ANY, "Back", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
 
-		
-	/*
-	Each widget is added to the sizer in the order from top to bottom.
-	Arguments: 
-		- widget
-		- proportion
-		- flags
-		- border-in-pixels
-	wxALL = add border on all 4 sides
-	wxEXPAND = let it stretch to fill available width 
-	*/
 	sizer->Add(userLabel, 0, wxALL, definedVar::BORDER_WIDTH);
 	sizer->Add(userInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
 	sizer->Add(emailLabel, 0, wxALL, definedVar::BORDER_WIDTH);

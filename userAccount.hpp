@@ -17,10 +17,17 @@ class userAccount {
 		std::string email_;
 		std::string password_;
 
+		// An empty tag type used only to select the "don't hash, this valid is already a hash" constructor overload below
+		struct AlreadyHashedTag {};
+		
+		// Private: stores newPass as-is, with no hashing.
+		// Only fromStoredHash() is allowed to call this.
+		userAccount(std::string newUser, std::string newEmail, std::string newPass, AlreadyHashedTag);
 
 	public:
+		static userAccount fromStoredHash(std::string user, std::string email, std::string pass);
 		userAccount(std::string newUser, std::string newEmail, std::string newPass);
-	
+		
 	// getter functions
 	[[nodiscard]] std::string_view get_username() const noexcept {return username_;}
 	[[nodiscard]] std::string_view get_email() const noexcept {return email_;}
@@ -34,9 +41,7 @@ class userAccount {
 	bool change_password(std::string_view old_password, std::string new_password);
 
 	// password verification function
-	[[nodiscard]] bool check_password(std::string_view attempt) const {
-		return attempt == password_;
-	}
+	[[nodiscard]] bool check_password(std::string_view attempt) const;
 
 	
 
