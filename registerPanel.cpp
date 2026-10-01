@@ -9,35 +9,51 @@
 
 
 RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), mainFrame_(mainFrame) {
-	auto *sizer = new wxBoxSizer(wxVERTICAL);
-
+	
+	SetBackgroundColour(wxColour(0,0,0));
+	
+	auto *card = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
+	card->SetBackgroundColour(wxColour(176,34,12));	
+	
+	auto *cardSizer = new wxBoxSizer(wxVERTICAL);
+	
 	// Username row
-	auto *userLabel = new wxStaticText(this, wxID_ANY, "Username:");
-	userInput_ = new wxTextCtrl(this, wxID_ANY);
+	auto *userLabel = new wxStaticText(card, wxID_ANY, "Username:");
+	userInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
 	
 	// Email row
-	auto *emailLabel = new wxStaticText(this, wxID_ANY, "Email:");
-	emailInput_ = new wxTextCtrl(this, wxID_ANY);
+	auto *emailLabel = new wxStaticText(card, wxID_ANY, "Email:");
+	emailInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
 	
 	// Password row
-	auto *passLabel = new wxStaticText(this, wxID_ANY, "Password:");
+	auto *passLabel = new wxStaticText(card, wxID_ANY, "Password:");
 	
 	// password is masked with dots/asterisks
-	passInput_ = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+	passInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1), wxTE_PASSWORD);
 	
-	auto *registerBtn = new wxButton(this, wxID_ANY, "Register", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
-	auto *backBtn = new wxButton(this, wxID_ANY, "Back", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
-
-	sizer->Add(userLabel, 0, wxALL, definedVar::BORDER_WIDTH);
-	sizer->Add(userInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
-	sizer->Add(emailLabel, 0, wxALL, definedVar::BORDER_WIDTH);
-	sizer->Add(emailInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
-	sizer->Add(passLabel, 0, wxALL, definedVar::BORDER_WIDTH);
-	sizer->Add(passInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
-	sizer->Add(registerBtn, 0, wxALL | wxALIGN_CENTER, definedVar::BORDER_WIDTH);
-	sizer->Add(backBtn, 0, wxALIGN_CENTER | wxALL, definedVar::BORDER_WIDTH);
-
-	SetSizer(sizer);
+	auto *registerBtn = new wxButton(card, wxID_ANY, "Register", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
+	registerBtn->SetBackgroundColour(wxColour(0,0,0));
+	
+	auto *backBtn = new wxButton(card, wxID_ANY, "Back", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
+	backBtn->SetBackgroundColour(wxColour(0,0,0));
+	
+	cardSizer->Add(userLabel, 0, wxALL, definedVar::BORDER_WIDTH);
+	cardSizer->Add(userInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
+	cardSizer->Add(emailLabel, 0, wxALL, definedVar::BORDER_WIDTH);
+	cardSizer->Add(emailInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
+	cardSizer->Add(passLabel, 0, wxALL, definedVar::BORDER_WIDTH);
+	cardSizer->Add(passInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
+	cardSizer->Add(registerBtn, 0, wxALL | wxALIGN_CENTER, definedVar::BORDER_WIDTH);
+	cardSizer->Add(backBtn, 0, wxALIGN_CENTER | wxALL, definedVar::BORDER_WIDTH);
+	
+	card->SetSizer(cardSizer);
+	card->Fit();
+	
+	auto *outer = new wxBoxSizer(wxVERTICAL);
+	outer->AddStretchSpacer(1);
+	outer->Add(card, 0, wxALIGN_CENTER_HORIZONTAL);
+	outer->AddStretchSpacer(1);
+	SetSizer(outer);
 	
 	// Connects the button's click event to the handler function below.
 	registerBtn->Bind(wxEVT_BUTTON, &RegisterPanel::OnRegisterClick, this);
@@ -49,6 +65,10 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 	const wxString email = emailInput_->GetValue();
 	const wxString pass = passInput_->GetValue();
 	
+	/*
+	Validate before touching the database. Rejects bad input early which means we never attempt
+	an insert with data that fails our criteria.
+	*/
 	const bool validUserInfo =  validator::InitAccountValidator (user.ToStdString(), email.ToStdString(), pass.ToStdString());
 	
 
@@ -67,29 +87,18 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 		return;
 	}
 	
-	try {  
-		const std::optional<userSettings::userAccount> newAccount = MainFrame::getRegistry().create(user.ToStdString(), email.ToStdString(), pass.ToStdString());
+	try {
 		/*
-		const std::optional<userSettings::userAccount> nameFound = MainFrame::getRegistry().find_name(user.ToStdString());
-		const std::optional<userSettings::userAccount> emailFound = MainFrame::getRegistry().find_email(user.ToStdString());
-
-		if (!(nameFound && emailFound)) {
-			
-			MainFrame::ShowLongMessage("Registration successful.", wxOK | wxICON_INFORMATION, "success");
-		
-		} else if (nameFound || emailFound) {
-		
-			MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR, "That username or email is already registered");
-
-		}
+		create() hashes the password internally and returns the std::nullopt if the username or email already exists.
+		This is enforced by Postgres's 	UNIQUE constraints, checked via ON CONFLICT DO NOTHING.)
 		*/ 
+		const std::optional<userSettings::userAccount> newAccount = MainFrame::getRegistry().create(user.ToStdString(), email.ToStdString(), pass.ToStdString());
+	
 		
 		if (newAccount) {
-		
 			MainFrame::ShowLongMessage("Registration successful.", wxOK | wxICON_INFORMATION, "success");
 
 		} else {	
-			
 			MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR, "That username or email is already registered");
 
 		} 
