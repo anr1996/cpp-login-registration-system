@@ -10,7 +10,7 @@
 
 RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), mainFrame_(mainFrame) {
 	
-	SetBackgroundColour(wxColour(0,0,0));
+	SetBackgroundColour(wxColour(241, 233, 210));
 	
 	auto *card = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
 	card->SetBackgroundColour(wxColour(176,34,12));	
@@ -19,15 +19,18 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	
 	// Username row
 	auto *userLabel = new wxStaticText(card, wxID_ANY, "Username:");
+	userLabel->SetForegroundColour(wxColour(255,255,255));
 	userInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
 	
 	// Email row
 	auto *emailLabel = new wxStaticText(card, wxID_ANY, "Email:");
+	emailLabel->SetForegroundColour(wxColour(255,255,255));
 	emailInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
 	
 	// Password row
 	auto *passLabel = new wxStaticText(card, wxID_ANY, "Password:");
-	
+	passLabel->SetForegroundColour(wxColour(255,255,255));
+
 	// password is masked with dots/asterisks
 	passInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1), wxTE_PASSWORD);
 	
@@ -52,7 +55,7 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	auto *outer = new wxBoxSizer(wxVERTICAL);
 	outer->AddStretchSpacer(1);
 	outer->Add(card, 0, wxALIGN_CENTER_HORIZONTAL);
-	outer->AddStretchSpacer(1);
+	outer->AddStretchSpacer();
 	SetSizer(outer);
 	
 	// Connects the button's click event to the handler function below.

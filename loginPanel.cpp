@@ -10,7 +10,7 @@
 LoginPanel::LoginPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), mainFrame_(mainFrame) {
 
 	// Set the background colour for the LoginPanel.
-	SetBackgroundColour(wxColour(0,0,0));
+	SetBackgroundColour(wxColour(241, 233, 210));
 
 	auto *card = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
 	card->SetBackgroundColour(wxColour(176,34,12));
@@ -19,7 +19,8 @@ LoginPanel::LoginPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent)
 	auto *cardSizer = new wxBoxSizer(wxVERTICAL);
 	
 	auto *userLabel = new wxStaticText(card, wxID_ANY, "Username:");	
-
+	userLabel->SetForegroundColour(wxColour(255,255,255));
+	
 	/*
 	Text fields are parented to "card" and sized to match the buttons
 	below them, so the whole card reads as one consistent column.
@@ -27,6 +28,7 @@ LoginPanel::LoginPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent)
 	userInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
 
 	auto *passLabel = new wxStaticText(card, wxID_ANY, "Password:");
+	passLabel->SetForegroundColour(wxColour(255,255,255));
 	passInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1), wxTE_PASSWORD);
 	
 	auto *loginBtn = new wxButton(card, wxID_ANY, "Login", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
@@ -54,7 +56,7 @@ LoginPanel::LoginPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent)
 	auto *outer = new wxBoxSizer(wxVERTICAL);
 	outer->AddStretchSpacer(1);
 	outer->Add(card, 0, wxALIGN_CENTER_HORIZONTAL);
-	outer->AddStretchSpacer(1);
+	outer->AddStretchSpacer();
 	SetSizer(outer);
 
 	
