@@ -64,7 +64,7 @@ public:
 	std::optional<userSettings::userAccount> find_email(std::string_view email) override {
 	pqxx::work txn(conn_);
 	const pqxx::result rows = txn.exec(
-		"SELECT username, email, password_hash FROM users WHERE email = $2::citext",
+		"SELECT username, email, password_hash FROM users WHERE email = $1::citext",
 		pqxx::params{std::string(email)});
 	
 	if (rows.empty()) {
@@ -79,6 +79,28 @@ public:
 		row[2].as<std::string>());
 	}
 
+	bool create_post(std::string_view username, std::string body) override {
+		pqxx::work txn{conn_};
+		
+		/*
+		INSERT .. SELECT: instead of VALUES, the rows come from a SELECT.
+		This will look up the user's id by username inside the same statement,
+		so the userAccount doesn't need to carry an id around. If no user matches,
+		the SELECT returns zero rows and nothing is inserted.
+		*/
+		pqxx::result result = txn.exec(
+		"INSERT INTO posts (user_id, body) "
+		"SELECT id, $2::text FROM users WHERE username = $1::citext "
+		"RETURNING id",
+		pqxx::params{std::string(username), body});
+		
+		if (result.empty()) {
+			return false;
+		}
+
+		txn.commit();
+		return true;
+	}
 
 };
 
@@ -93,4 +115,5 @@ std::unique_ptr<userRepository> makePostgresUserRepository() {
 	
 }
 
-} // namespace userAccRegistory
+
+} // userAccRegistory

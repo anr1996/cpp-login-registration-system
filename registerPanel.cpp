@@ -10,7 +10,7 @@
 
 RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), mainFrame_(mainFrame) {
 	
-	SetBackgroundColour(wxColour(241, 233, 210));
+	SetBackgroundColour(definedVar::GetPanelColor());
 	
 	auto *card = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
 	card->SetBackgroundColour(wxColour(176,34,12));	

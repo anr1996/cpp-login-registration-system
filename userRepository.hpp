@@ -32,6 +32,10 @@ public:
 	// Returns the account with this email, or std::nullopt if there is none.
 	virtual std::optional<userSettings::userAccount> find_email(std::string_view email) = 0;
 
+	
+	// Saves a new post for the given username. Returns false if the username doesn't exist (nothing is saved in that case).	
+	virtual bool create_post(std::string_view username, std::string body) = 0;
+	
 };
 
 } // namespace userAccRegistry

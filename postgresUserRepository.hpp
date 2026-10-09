@@ -12,5 +12,5 @@ Throws if the variable is missing or the connection fails.
 */
 
 std::unique_ptr<userRepository> makePostgresUserRepository();
- 
+
 } // namespace userAccRegistry

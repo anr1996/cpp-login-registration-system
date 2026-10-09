@@ -29,7 +29,7 @@ class userAccount {
 		userAccount(std::string newUser, std::string newEmail, std::string newPass);
 		
 	// getter functions
-	[[nodiscard]] std::string_view get_username() const noexcept {return username_;}
+	[[nodiscard]] std::string get_username() const noexcept {return username_;}
 	[[nodiscard]] std::string_view get_email() const noexcept {return email_;}
 	[[nodiscard]] std::string_view get_pass() const noexcept {return password_;}
 		

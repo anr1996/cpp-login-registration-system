@@ -10,7 +10,7 @@
 LoginPanel::LoginPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), mainFrame_(mainFrame) {
 
 	// Set the background colour for the LoginPanel.
-	SetBackgroundColour(wxColour(241, 233, 210));
+	SetBackgroundColour(definedVar::GetPanelColor());
 
 	auto *card = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
 	card->SetBackgroundColour(wxColour(176,34,12));
@@ -76,7 +76,11 @@ void LoginPanel::OnLoginClick(wxCommandEvent & /*event*/) {
 		*/
 		const std::optional<userSettings::userAccount> accountFound = MainFrame::getRegistry().find_name(user.ToStdString());
 		if (accountFound && accountFound->check_password(pass.ToStdString())) {
-			MainFrame::ShowLongMessage("Login successful.", wxOK | wxICON_INFORMATION, "success");
+			/*
+			Hand the found account to MainFrame, which remembers it as the current user and switches to the homescreen.
+			mainFrame_->ShowHome(*accountFound);
+			*/
+			mainFrame_->ShowHome(*accountFound);
 		} else {
 			/*
 			 Return the same message whether the username or password was wrong. 

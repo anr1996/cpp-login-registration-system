@@ -7,11 +7,12 @@
 WelcomePanel::WelcomePanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), mainFrame_(mainFrame) {
 	
 	// Sets the background color for the panel.
-	SetBackgroundColour(wxColour(241, 233, 210));
+	SetBackgroundColour(definedVar::GetPanelColor());
 
+	
 	// The "welcomeTitle" is a second, smaller panel living inside the WelcomePanel.
 	auto *welcomeTitle = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
-	welcomeTitle->SetBackgroundColour(wxColour(176,34,12));
+	welcomeTitle->SetBackgroundColour(definedVar::GetPanelColor_1());
 
 	// welcomeTitleSizer stacks the titles own widget vertically.
 	auto *welcomeTitleSizer = new wxBoxSizer(wxVERTICAL);

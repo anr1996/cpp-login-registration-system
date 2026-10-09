@@ -2,6 +2,7 @@
 #include <utility>
 #include "validator.hpp"
 #include "hasher.hpp"
+#include <cctype>
 
 namespace userSettings {
 

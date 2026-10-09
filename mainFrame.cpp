@@ -5,10 +5,13 @@ MainFrame::MainFrame() : wxFrame(nullptr, wxID_ANY, "Account System", wxDefaultP
 	welcomePanel_ = new WelcomePanel(this, this);
 	loginPanel_ = new LoginPanel(this, this);
 	registerPanel_ = new RegisterPanel(this, this);
+	homePanel_ = new HomePanel(this, this);
+	
 	sizer_ = new wxBoxSizer(wxVERTICAL);
 	sizer_->Add(welcomePanel_, 1, wxEXPAND);
 	sizer_->Add(loginPanel_, 1, wxEXPAND);	
 	sizer_->Add(registerPanel_, 1, wxEXPAND);
+	sizer_->Add(homePanel_,1 , wxEXPAND);
 	SetSizer(sizer_);
 	
 	ShowWelcome(); // Start on the welcome screen.
@@ -18,6 +21,7 @@ void MainFrame::ShowWelcome() {
 	welcomePanel_->Show();
 	loginPanel_->Hide();
 	registerPanel_->Hide();
+	homePanel_->Hide();
 	Layout();
 }
 
@@ -26,6 +30,7 @@ void MainFrame::ShowLogin() {
 	welcomePanel_->Hide();
 	loginPanel_->Show();
 	registerPanel_->Hide();
+	homePanel_->Hide();
 	Layout();
 }
 
@@ -33,9 +38,46 @@ void MainFrame::ShowRegister() {
 	welcomePanel_->Hide();
 	loginPanel_->Hide();
 	registerPanel_->Show();
+	homePanel_->Hide();
 	Layout();
 }
 
+void MainFrame::ShowHome(userSettings::userAccount account) {
+	/*
+	Remember who just logged in, then switch to the home screen.
+	homePanel_Refresh... (see below) reads this through GetCurrentUser();
+	*/
+	currentUser_ = std::move(account);
+	
+	welcomePanel_->Hide();
+	loginPanel_->Hide();
+	registerPanel_->Hide();
+	homePanel_->Show();
+	
+	/*
+	Tell the home panel to redraw its welcome text with the new username, now that currentUser_ has changed.
+	*/
+	homePanel_->RefreshForCurrentUser();
+
+	Layout();
+}
+
+void MainFrame::Logout() {
+	// Forget who was logged in, then return to the welcome screen.
+	currentUser_ = std::nullopt;
+	ShowWelcome();
+}
+
+const userSettings::userAccount* MainFrame::GetCurrentUser() const {
+	/*
+	std::optional::has_value() tells us whether currentUser_ holds a real account.
+	&(*currentUser_) takes the address of the value inside the optional, giving us a plain pointer to hand back.
+	*/
+	if (!currentUser_.has_value()) {
+		return nullptr;
+	}
+	return &(*currentUser_);
+}
 
 	
 userAccRegistry::userRepository& MainFrame::getRegistry() {
