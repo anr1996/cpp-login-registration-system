@@ -13,6 +13,15 @@ private:
 	wxTextCtrl *userInput_;
 	wxTextCtrl *emailInput_;
 	wxTextCtrl *passInput_;
+	wxTextCtrl *firstNameInput_;
+	wxTextCtrl *lastNameInput_;
+	wxTextCtrl *DOBInput_;
+	wxTextCtrl *phoneInput_;
+	wxTextCtrl *genderInput_;
+	wxTextCtrl *locationInput_;
+
+
+
 	void OnRegisterClick(wxCommandEvent & /*event*/);
 	void OnBackClick(wxCommandEvent & /*event*/);
 };

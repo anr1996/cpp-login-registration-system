@@ -24,7 +24,12 @@ public:
 	
 	// Creates and stores a new account (the password gets hashed).
 	// Returns the new account, or std:::nullopt if the username or email is already in use.
-	virtual std::optional<userSettings::userAccount> create(std::string name, std::string email, std::string password) = 0;
+	virtual std::optional<userSettings::userAccount> create(
+								std::string name, 
+								std::string email, 
+								std::string password, 
+								userSettings::UserProfile profile	
+								) = 0;
 	
 	// Returns the account with this username, or std::nullopt if there is none.
 	virtual std::optional<userSettings::userAccount> find_name(std::string_view name) = 0;

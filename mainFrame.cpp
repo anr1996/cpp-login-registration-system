@@ -88,8 +88,6 @@ userAccRegistry::userRepository& MainFrame::getRegistry() {
 
 void MainFrame::ShowLongMessage(const wxString& title, int64_t style, const wxString& message) {
 
-	style = wxOK | wxICON_ERROR;
-
 	wxDialog dlg(nullptr, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
 
 	// Top-level vertical sizer (stacks: content row, then line, then buttons).

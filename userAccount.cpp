@@ -1,31 +1,67 @@
 #include "userAccount.hpp"
+#include "userProfile.hpp"
 #include <utility>
 #include "validator.hpp"
 #include "hasher.hpp"
 #include <cctype>
 
+
 namespace userSettings {
 
-userAccount::userAccount(std::string newUser, std::string newEmail, std::string newPass)
+userAccount::userAccount(
+			  std::string newUser
+			, std::string newEmail
+   			, std::string newPass
+			, UserProfile newProfile	
+			)
+
 	: username_(std::move(newUser))
 	, email_(std::move(newEmail))
 	, password_(hashPassword(newPass))
+	, profile_(std::move(newProfile))
+
+
 {
 	
 }
 
-userAccount::userAccount(std::string newUser, std::string newEmail, std::string newPass, AlreadyHashedTag)
+
+userAccount::userAccount(
+			  std::string newUser
+			, std::string newEmail
+   			, std::string newPass
+			, UserProfile newProfile
+			, AlreadyHashedTag
+			)
+
 	: username_(std::move(newUser))
 	, email_(std::move(newEmail))
 	, password_(std::move(newPass))
+	, profile_(std::move(newProfile))
+
 {
 	
 }
 
-userAccount userAccount::fromStoredHash(std::string user, std::string email, std::string pass)
+
+userAccount userAccount::fromStoredHash(
+			  std::string user
+			, std::string email
+   			, std::string pass
+			, UserProfile profile		
+			)
+
 {
-	return userAccount(std::move(user), std::move(email), std::move(pass), AlreadyHashedTag{});
+ return userAccount(
+		    std::move(user)
+		  , std::move(email)
+		  , std::move(pass)
+		  , std::move(profile)
+		  , AlreadyHashedTag{});
+
 }
+
+
 
 bool userAccount::set_username(std::string user) {
 	if (user.empty()) return  false;
@@ -38,6 +74,12 @@ bool userAccount::set_email(std::string email) {
 	if (email.empty()) return false;	
 	if (!(validator::isValidEmail(email))) return false;  	
 	email_ = std::move(email);
+	return true;
+}
+
+bool userAccount::set_profile(UserProfile profile) {
+	if (!validator::isValidProfile(profile)) return false;
+	profile_ = std::move(profile);
 	return true;
 }
 
@@ -55,5 +97,4 @@ bool userAccount::check_password(std::string_view attempt) const {
 
 }
 
- 
 

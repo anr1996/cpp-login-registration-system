@@ -24,9 +24,35 @@ namespace validator {
 		return std::regex_match(email, pattern);
 	}
 
-	bool InitAccountValidator (const std::string& user_, const std::string& email_, const std::string& pass_) {
-		return isValidUsername(user_) && isValidEmail(email_) && isValidPassword(pass_);
-		
+	bool isValidName(const std::string& name){
+		static const std::regex pattern(
+			"^[a-zA-Z]+([ '-][a-zA-Z]+)*$"
+		);
+		return name.size() <= 50 && std::regex_match(name, pattern);
 	}
 
+
+	bool isValidPhone(const std::string& phoneNumber){
+	static const std::regex pattern(
+		"^[0-9]{10}$"
+	);
+	return std::regex_match(phoneNumber, pattern);
+	}
+
+	bool isValidGender(const std::string& gender) {
+		return gender == "male" ||
+		       gender == "female" ||
+		       gender == "non_binary" ||
+		       gender == "other";
+	}
+	
+	bool isValidProfile(const userSettings::UserProfile& profile) {
+	return isValidName(profile.firstName) &&
+	       isValidName(profile.lastName) &&
+	       isValidPhone(profile.phoneNumber) &&
+	       isValidGender(profile.gender) &&
+	       !profile.dateOfBirth.empty() &&
+	       !profile.location.empty();	
+
+	}
 }

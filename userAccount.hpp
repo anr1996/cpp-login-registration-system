@@ -2,6 +2,7 @@
 
 #include <string>
 #include <string_view>
+#include "userProfile.hpp"
 
 namespace userSettings {
 
@@ -16,26 +17,51 @@ class userAccount {
 		std::string username_;
 		std::string email_;
 		std::string password_;
-
+		UserProfile profile_;
+				
+	
 		// An empty tag type used only to select the "don't hash, this valid is already a hash" constructor overload below
 		struct AlreadyHashedTag {};
 		
 		// Private: stores newPass as-is, with no hashing.
 		// Only fromStoredHash() is allowed to call this.
-		userAccount(std::string newUser, std::string newEmail, std::string newPass, AlreadyHashedTag);
+		userAccount(
+			      std::string newUser
+			    , std::string newEmail
+		            , std::string newPass
+			    , UserProfile newProfile			   
+ 			    , AlreadyHashedTag
+			   );
+
+	
 
 	public:
-		static userAccount fromStoredHash(std::string user, std::string email, std::string pass);
-		userAccount(std::string newUser, std::string newEmail, std::string newPass);
+		static userAccount fromStoredHash(
+						   std::string user
+						 , std::string email
+						 , std::string pass
+						 , UserProfile profile						
+						 );
+
 		
+		userAccount(
+			     std::string newUser
+			   , std::string newEmail
+   			   , std::string newPass
+			   , UserProfile newProfile			  
+			   );
+
+			
 	// getter functions
 	[[nodiscard]] std::string get_username() const noexcept {return username_;}
 	[[nodiscard]] std::string_view get_email() const noexcept {return email_;}
 	[[nodiscard]] std::string_view get_pass() const noexcept {return password_;}
-		
+	[[nodiscard]] const UserProfile& get_profile() const noexcept {return profile_;}	
+	
 	// setter functions
 	bool set_username(std::string user);
 	bool set_email(std::string email);
+	bool set_profile(UserProfile userProfile);
 
 	// password change function which requires the current password.
 	bool change_password(std::string_view old_password, std::string new_password);

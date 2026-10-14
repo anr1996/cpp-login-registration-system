@@ -69,6 +69,9 @@ void LoginPanel::OnLoginClick(wxCommandEvent & /*event*/) {
 	const wxString user = userInput_->GetValue();
 	const wxString pass = passInput_->GetValue();
 	
+	wxString failMessage = "Username or password is incorrect."; 
+	wxString databaseFailMessage = "Could not reach the database. Please try again.";
+
 	try {
 		/*
 		find_name() looks up the username in Postgres (case insensitive via citext)
@@ -76,16 +79,19 @@ void LoginPanel::OnLoginClick(wxCommandEvent & /*event*/) {
 		*/
 		const std::optional<userSettings::userAccount> accountFound = MainFrame::getRegistry().find_name(user.ToStdString());
 		if (accountFound && accountFound->check_password(pass.ToStdString())) {
+			
 			/*
 			Hand the found account to MainFrame, which remembers it as the current user and switches to the homescreen.
-			mainFrame_->ShowHome(*accountFound);
 			*/
 			mainFrame_->ShowHome(*accountFound);
+			userInput_->Clear();
+			passInput_->Clear();
+			
 		} else {
 			/*
 			 Return the same message whether the username or password was wrong. 
 			*/
-			MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, "Username or password is incorrect.");
+			MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, failMessage);
 		} 
 
 		
@@ -96,7 +102,7 @@ void LoginPanel::OnLoginClick(wxCommandEvent & /*event*/) {
 		technical details to the terminal instead.
 		*/
 		std::cerr << "Database error: " << e.what() << "\n";
-		MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, "Could not reach the database. Please try again.");
+		MainFrame::ShowLongMessage("Login failed.", wxOK | wxICON_ERROR, databaseFailMessage);
 	}
 
 }
