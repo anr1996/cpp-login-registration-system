@@ -1,11 +1,34 @@
 #include "registerPanel.hpp"
 #include "mainFrame.hpp"
 #include "appConstants.hpp"
+#include "accountRules.hpp"
 #include "userProfile.hpp"
 #include "validator.hpp"
+#include <array>
+#include <cstddef>
 #include <exception>
 #include <iostream>
 #include <optional>
+#include <string>
+#include <vector>
+
+
+namespace {
+// label = what the user sees, value = what is validated and stored in the database.
+struct GenderOption {
+	const char* label;
+	const char* value;
+};
+
+constexpr std::array<GenderOption, 4> GENDER_OPTIONS {{
+	{"Male", "male"},
+	{"Female", "female"},
+	{"Non-binary", "non_binary"},
+	{"Other", "other"}}};
+
+
+
+} // namespace
 
 
 RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), mainFrame_(mainFrame) {
@@ -31,9 +54,16 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	auto *passLabel = new wxStaticText(card, wxID_ANY, "Password:");
 	passLabel->SetForegroundColour(wxColour(255,255,255));
 
-	// password is masked with dots/asterisks
+	// Password is masked with dots/asterisks
 	passInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1), wxTE_PASSWORD);
 
+	// Confirm password row
+	auto *confirmPassLabel = new wxStaticText(card, wxID_ANY, "Confirm password:");
+	confirmPassLabel->SetForegroundColour(wxColour(255,255,255));
+
+	// Confirmed password is masked with dots/asterisks
+	confirmPassInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1), wxTE_PASSWORD);
+	
 	// first name row
 	auto *firstNameLabel = new wxStaticText(card, wxID_ANY, "First name:");
 	firstNameLabel->SetForegroundColour(wxColour(255,255,255));
@@ -47,22 +77,38 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	// date of birth row
 	auto *DOBLabel = new wxStaticText(card, wxID_ANY, "Date of birth:");
 	DOBLabel->SetForegroundColour(wxColour(255,255,255));
-	DOBInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
+	
+	// Calendar-style picker. Dates after (today minus MIN_AGE years) are not available.
+	latestAllowed_ = wxDateTime::Today();
+	latestAllowed_.Subtract(wxDateSpan::Years(accountRules::MIN_AGE));
+
+	DOBInput_ = new wxDatePickerCtrl(card, wxID_ANY, latestAllowed_, wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1), wxDP_DROPDOWN);
+	DOBInput_->SetRange(wxDateTime(1, wxDateTime::Jan, 1900), latestAllowed_);
 
 	// phone number row
 	auto *phoneLabel = new wxStaticText(card, wxID_ANY, "Phone number:");
 	phoneLabel->SetForegroundColour(wxColour(255,255,255));
 	phoneInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
-
-	// gender row
+	
 	auto *genderLabel = new wxStaticText(card, wxID_ANY, "Gender:");
 	genderLabel->SetForegroundColour(wxColour(255,255,255));
-	genderInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
+	
+	// gender row
+	wxArrayString genderLabels;
+	for (const GenderOption& option : GENDER_OPTIONS) {
+		genderLabels.Add(option.label);	
+	}
+ 	
+	genderInput_ = new wxChoice(card, wxID_ANY, wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1), genderLabels);
+	genderInput_->SetBackgroundColour((wxColour(0, 0, 0)));
 
 	// Location row
 	auto *locationLabel = new wxStaticText(card, wxID_ANY, "Location:");
 	locationLabel->SetForegroundColour(wxColour(255,255,255));
 	locationInput_ = new wxTextCtrl(card, wxID_ANY, "", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, -1));
+
+	locationSuggestions_ = new wxListBox(card, wxID_ANY, wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::SUGGESTION_BOX_HEIGHT));
+	locationSuggestions_->Hide();	
 	
 	auto *registerBtn = new wxButton(card, wxID_ANY, "Register", wxDefaultPosition, wxSize(definedVar::BUTTON_WIDTH, definedVar::BUTTON_HEIGHT));
 	registerBtn->SetBackgroundColour(wxColour(0,0,0));
@@ -76,6 +122,8 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	cardSizer->Add(emailInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
 	cardSizer->Add(passLabel, 0, wxALL, definedVar::BORDER_WIDTH);
 	cardSizer->Add(passInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
+	cardSizer->Add(confirmPassLabel, 0, wxALL, definedVar::BORDER_WIDTH);
+	cardSizer->Add(confirmPassInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
 	cardSizer->Add(firstNameLabel, 0, wxALL, definedVar::BORDER_WIDTH);
 	cardSizer->Add(firstNameInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
 	cardSizer->Add(lastNameLabel, 0, wxALL, definedVar::BORDER_WIDTH);
@@ -88,6 +136,8 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	cardSizer->Add(genderInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
 	cardSizer->Add(locationLabel, 0, wxALL, definedVar::BORDER_WIDTH);
 	cardSizer->Add(locationInput_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);	
+	cardSizer->Add(locationSuggestions_, 0, wxLEFT | wxRIGHT | wxEXPAND, definedVar::BORDER_WIDTH);
+	
 	cardSizer->Add(registerBtn, 0, wxALL | wxALIGN_CENTER, definedVar::BORDER_WIDTH);
 	cardSizer->Add(backBtn, 0, wxALIGN_CENTER | wxALL, definedVar::BORDER_WIDTH);
 	
@@ -103,26 +153,60 @@ RegisterPanel::RegisterPanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(p
 	// Connects the button's click event to the handler function below.
 	registerBtn->Bind(wxEVT_BUTTON, &RegisterPanel::OnRegisterClick, this);
 	backBtn->Bind(wxEVT_BUTTON, &RegisterPanel::OnBackClick, this);
+	locationInput_->Bind(wxEVT_TEXT, &RegisterPanel::OnLocationText, this);
+	locationSuggestions_->Bind(wxEVT_LISTBOX, &RegisterPanel::OnSuggestionSelected, this);
 }	
 
 void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 
+	const int genderIndex = genderInput_->GetSelection();
+	const std::string genderValue = (genderIndex == wxNOT_FOUND) ? "" : GENDER_OPTIONS.at(static_cast<std::size_t>(genderIndex)).value;
+
+	/*
+	Resolve the typed location to the official city label. Empty means
+	"not found", and the validation below turns that into a message.
+	*/
+	std::string officialLocation {};
+	wxString locationMessage {};
+	const std::string typedLocation = locationInput_->GetValue().ToStdString();
+	
+	if (typedLocation.empty()) {
+		locationMessage = "Please choose a location.\n";
+	} else {
+		try {
+			const std::optional<std::string> found = MainFrame::getRegistry().find_city(typedLocation);
+			if (found) {
+				officialLocation = *found;
+			} else {
+				locationMessage = "Please pick a location from the suggestions in the form 'City, ST, CC' (for example 'Boston, MA, US').\n";
+			}
+		} catch (const std::exception &e) {
+			std::cerr << "City check error: " << e.what() << "\n";
+			locationMessage = "Could not verify the location. Please try again.\n";
+		}
+	}
+
 	const userSettings::UserProfile profile {
 		.firstName = firstNameInput_->GetValue().ToStdString(),
 		.lastName = lastNameInput_->GetValue().ToStdString(),
-		.dateOfBirth = DOBInput_->GetValue().ToStdString(),
+		.dateOfBirth = DOBInput_->GetValue().FormatISODate().ToStdString(),
 		.phoneNumber = phoneInput_->GetValue().ToStdString(),
-		.gender = genderInput_->GetValue().ToStdString(),
-		.location = locationInput_->GetValue().ToStdString()
+		.gender = genderValue,
+		.location = officialLocation
 	
 	};
 
 	const std::string user = userInput_->GetValue().ToStdString(); 
 	const std::string email = emailInput_->GetValue().ToStdString(); 
 	const std::string pass = passInput_->GetValue().ToStdString();
-	
+	const std::string confirmPass = confirmPassInput_->GetValue().ToStdString();	
 													
 	wxString message {};
+	
+	if (pass != confirmPass) {
+		message += "password and confirmation password must match.\n";
+	}
+
 	if (!(validator::isValidUsername(user))) {
 		message +=  "Username must be 3 to 30 characters long.\n"
 			     "It can contain letters, numbers, underscores '_', dots'.', and hyphens'-'.\n"
@@ -156,19 +240,28 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 	}
 
 	if (!(validator::isValidGender(profile.gender))) {
-		message += "The gender must be one of the following options: male, female, non_binary, other.\n";
-	}	
+		message += "Please choose a gender from the list.\n";
+	}
 
+	if (!(validator::isValidDateOfBirth(profile.dateOfBirth))) {
+		message += "Please provide a valid date of birth in the format 'YYYY-MM-DD'.\n";
+	} else if (!(validator::isOldEnough(profile.dateOfBirth, accountRules::MIN_AGE))) {
+		std::string requiredAge = std::to_string(accountRules::MIN_AGE);
+		message += "You must be at least " + requiredAge + " years old to register.\n";
+	}
+
+	message += locationMessage;
+	
  	if (!message.empty()) {
 		MainFrame::ShowLongMessage("Registration failed.", wxOK | wxICON_ERROR, message);
 		return;
 	}
 
 	wxString successMessage = "success";
-	wxString registrationFailedMessage = "The username or email is already registered.";
-	wxString databaseErrorMessage = "Could not reach the database. Please try again.";
-
+	wxString registrationFailedMessage = "The username or email is already registered.\n";
+	wxString databaseErrorMessage = "Could not reach the database. Please try again.\n";
 	
+		
 	try {
 		/*
 		create() hashes the password internally and returns the std::nullopt if the username or email already exists.
@@ -189,13 +282,15 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 			
 			 userInput_->Clear();
 			 passInput_->Clear();
-		 	 emailInput_->Clear();
+		 	 confirmPassInput_->Clear();
+		         emailInput_->Clear();
 			 firstNameInput_->Clear();
 			 lastNameInput_->Clear();
-			 DOBInput_->Clear();
+			 DOBInput_->SetValue(latestAllowed_);
 			 phoneInput_->Clear();
-			 genderInput_->Clear();
+			 genderInput_->SetSelection(wxNOT_FOUND);
 			 locationInput_->Clear();
+			 HideSuggestions();
 
 		} else {	
 			
@@ -213,4 +308,69 @@ void RegisterPanel::OnRegisterClick(wxCommandEvent & /*event*/) {
 void RegisterPanel::OnBackClick(wxCommandEvent & /*event*/) {
 	mainFrame_->ShowWelcome();
 }
+
+void RegisterPanel::OnLocationText(wxCommandEvent & /*event*/) {
+	const wxString typed = locationInput_->GetValue();
+	
+	// Too short: a 1-2 letter prefix would match thousands of cities.
+	if (typed.length() < definedVar::MIN_LOCATION_CHARS) {
+		
+		HideSuggestions();
+		return;
+	}
+	
+	try {
+		const std::vector<std::string> labels = 
+			MainFrame::getRegistry().search_cities(typed.ToStdString(), definedVar::MAX_SUGGESTIONS);
+
+		locationSuggestions_->Clear();			
+		for (const std::string &label : labels) {
+			locationSuggestions_->Append(wxString::FromUTF8(label));
+		}
+
+		// Show the list only when there is something to pick.
+		if (labels.empty()) {
+			HideSuggestions();
+			
+		} else {
+			locationSuggestions_->Show();
+			ResizeCard();
+		}
+	
+	} catch (const std::exception &e) {
+		// Suggestions are a convenience, so a database problem here is logged but not shown.
+		std::cerr << "City search error: " << e.what() << "\n";
+	}
+	
+}
+
+void RegisterPanel::HideSuggestions() {
+	
+	if (locationSuggestions_->IsShown()) {
+		locationSuggestions_->Hide();
+		ResizeCard();	
+	}
+}
+
+// The card's sizer must recompute its size after a child is shown or hidden.
+void RegisterPanel::ResizeCard() {
+	locationInput_->GetParent()->Layout();
+	locationInput_->GetParent()->Fit();
+	Layout();
+}
+
+void RegisterPanel::OnSuggestionSelected(wxCommandEvent & /*event*/) {
+	
+	const int index = locationSuggestions_->GetSelection();
+	if (index == wxNOT_FOUND) {
+		return;
+	}
+/*
+Clicking an item copies it into the box. Changing the text fires wxEVT_TEXT, which would rebuild the list. 
+ChangeValue() sets the text without firing that event. so the list stays closed after a pick.
+*/
+locationInput_->ChangeValue(locationSuggestions_->GetString(static_cast<unsigned>(index)));
+	HideSuggestions();
+}
+
 

@@ -19,8 +19,20 @@ namespace validator {
 
 	// bool function checks for valid phone number
 	bool isValidPhone(const std::string& phoneNumber);
-
-	bool isValidGender(const std::string& gender);
 	
-	bool isValidProfile(const userSettings::UserProfile& profile);
+	// bool function checks for valid gender
+	bool isValidGender(const std::string& gender);
+
+	// bool function checks for valid date of birth in the format: "YYYY-MM-DD"
+	bool isValidDateOfBirth(const std::string& dob);
+	
+	// Checks that dob is a real date and the person is at least minAge years old today.
+	bool isOldEnough(const std::string& dob, int minAge);
+	
+	/*
+	Validates first name, last name, phone number, gender, , minimum age requirement, and date of birth
+	for the user profile.
+	*/
+	bool isValidProfile(const userSettings::UserProfile& profile); 	
+
 } // namespace validator

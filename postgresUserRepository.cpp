@@ -7,6 +7,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <vector>
 
 
 namespace userAccRegistry {
@@ -133,6 +134,35 @@ public:
 		txn.commit();
 		return true;
 	}
+
+	std::vector<std::string> search_cities(std::string_view prefix, int limit) override {
+		pqxx::work txn(conn_);
+		const pqxx::result rows = txn.exec(
+			"SELECT label::text FROM cities "
+			"WHERE label::text ILIKE $1 || '%' "
+			"ORDER BY label::text LIMIT $2",
+			pqxx::params{std::string(prefix), limit});
+
+		std::vector<std::string> labels;
+		labels.reserve(rows.size());
+		for (const auto& row : rows) {
+			labels.push_back(row[0].as<std::string>());
+		}
+		return labels;
+	}
+	
+	std::optional<std::string> find_city(std::string_view label) override {
+		pqxx::work txn(conn_);
+		const pqxx::result rows = txn.exec(
+			"SELECT label::text FROM cities WHERE label = $1::citext",
+			pqxx::params{std::string(label)});
+		if (rows.empty()) {
+			return std::nullopt;
+		}
+		return rows[0][0].as<std::string>();
+
+	}	
+
 
 };
 

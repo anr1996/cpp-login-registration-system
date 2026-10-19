@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/wx.h>
+#include <wx/datectrl.h>
 
 class MainFrame;
 
@@ -13,17 +14,23 @@ private:
 	wxTextCtrl *userInput_;
 	wxTextCtrl *emailInput_;
 	wxTextCtrl *passInput_;
+	wxTextCtrl *confirmPassInput_;
 	wxTextCtrl *firstNameInput_;
 	wxTextCtrl *lastNameInput_;
-	wxTextCtrl *DOBInput_;
+	wxDatePickerCtrl *DOBInput_;
 	wxTextCtrl *phoneInput_;
-	wxTextCtrl *genderInput_;
+	wxChoice *genderInput_;
 	wxTextCtrl *locationInput_;
-
-
+	wxListBox *locationSuggestions_;
+	wxDateTime latestAllowed_;
 
 	void OnRegisterClick(wxCommandEvent & /*event*/);
 	void OnBackClick(wxCommandEvent & /*event*/);
+	void OnLocationText(wxCommandEvent & /*event*/);
+	void OnSuggestionSelected(wxCommandEvent & /*event*/);	
+	void HideSuggestions();
+	void ResizeCard();
+
 };
 
 

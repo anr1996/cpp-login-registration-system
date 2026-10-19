@@ -1,10 +1,11 @@
 #pragma once
 
 #include "userAccount.hpp"
-
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
+
 
 namespace userAccRegistry {
 
@@ -40,7 +41,15 @@ public:
 	
 	// Saves a new post for the given username. Returns false if the username doesn't exist (nothing is saved in that case).	
 	virtual bool create_post(std::string_view username, std::string body) = 0;
+
+	// Returns up to 'limit' city labels starting with 'prefix' (case-insensitive).
+	virtual std::vector<std::string> search_cities(std::string_view prefix, int limit) = 0;
 	
+	/*
+	Returns the official label (such as "Keizer, OR, US") for a typed location.
+	matching case-insensitively, or std::nullopt if no such city exists.
+	*/	
+	virtual std::optional<std::string> find_city(std::string_view label) = 0;	
 };
 
 } // namespace userAccRegistry
