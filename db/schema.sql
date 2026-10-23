@@ -1,7 +1,7 @@
 
 /*
 Schema for the C++ login and registration system (PostgreSQL 16).
-Usage: psql - U postgres id login_app -f db/schema.sql
+Usage: psql -U postgres -d login_app -f db/schema.sql
 */
 
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -36,5 +36,20 @@ Not populated here. Load it from GeoNames (CC by 4.0), see the README.
 CREATE TABLE IF NOT EXISTS cities (
 	label CITEXT PRIMARY KEY
 );
+
+
+/*
+A row means follower_id follows followee_id.
+The composite primary key prevents duplicate follows, and the CHECK prevents self-follows
+*/
+CREATE TABLE IF NOT EXISTS follows (
+	follower_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	followee_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+	PRIMARY KEY (follower_id, followee_id),
+	CHECK (follower_id <> followee_id)
+);
+
+CREATE INDEX IF NOT EXISTS follows_followee_idx ON follows (followee_id);
 
 
