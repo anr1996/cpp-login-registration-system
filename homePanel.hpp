@@ -23,7 +23,12 @@ private:
 	wxStaticText *welcomeLabel_;
 	wxTextCtrl *postBox_;
 	wxStaticText *statusLabel_;
+	wxPanel *feed_;
+	wxBoxSizer *feedSizer_;
 
+	wxScrolledWindow *scrollBar_;
+	
+	void RefreshFeed();
 	void OnPostClick(wxCommandEvent & /*event*/);
 	void OnLogoutClick(wxCommandEvent & /*event*/);
 };

@@ -134,6 +134,26 @@ public:
 		txn.commit();
 		return true;
 	}
+	
+	std::vector<userSettings::Post> get_posts(std::string_view username, int limit) override {
+		pqxx::work txn(conn_);
+		const pqxx::result rows = txn.exec(
+			"SELECT p.body, to_char(p.created_at, 'YYYY-MM-DD HH24:MI') "
+			"FROM posts p JOIN users u ON u.id = p.user_id "
+			"WHERE u.username = $1::citext "
+			"ORDER BY p.created_at DESC, p.id DESC "
+			"LIMIT $2",
+			pqxx::params{std::string(username), limit});
+		
+		std::vector<userSettings::Post> posts;
+		posts.reserve(rows.size());
+		for (const auto& row : rows) {
+			posts.push_back(userSettings::Post{
+				.body = row[0].as<std::string>(), 
+				.createdAt = row[1].as<std::string>()});
+		}
+		return posts;
+	} 
 
 	std::vector<std::string> search_cities(std::string_view prefix, int limit) override {
 		pqxx::work txn(conn_);

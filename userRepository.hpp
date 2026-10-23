@@ -1,5 +1,6 @@
 #pragma once
 
+#include "post.hpp"
 #include "userAccount.hpp"
 #include <optional>
 #include <string>
@@ -42,6 +43,9 @@ public:
 	// Saves a new post for the given username. Returns false if the username doesn't exist (nothing is saved in that case).	
 	virtual bool create_post(std::string_view username, std::string body) = 0;
 
+	// Returns up to 'limit' posts by this user, newest first.
+	virtual std::vector<userSettings::Post> get_posts(std::string_view username, int limit) = 0;
+	
 	// Returns up to 'limit' city labels starting with 'prefix' (case-insensitive).
 	virtual std::vector<std::string> search_cities(std::string_view prefix, int limit) = 0;
 	
