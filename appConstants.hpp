@@ -35,6 +35,8 @@ inline constexpr int MAX_SUGGESTIONS = 10; // cap on rows fetched per keystroke
 inline constexpr int SUGGESTION_BOX_HEIGHT = 120;
 inline constexpr int MAX_FEED_POSTS = 50; // newest posts shown on the home screen
 inline constexpr int FEED_WRAP = 460; // pixel width at which post text wraps
+inline constexpr int MAX_USER_RESULTS = 10; // cap on
+
 } // namespace definedVar
 
 

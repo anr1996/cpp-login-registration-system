@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <wx/wx.h>
 
 class MainFrame;
@@ -25,10 +26,16 @@ private:
 	wxStaticText *statusLabel_;
 	wxPanel *feed_;
 	wxBoxSizer *feedSizer_;
-
 	wxScrolledWindow *scrollBar_;
+	
+	wxTextCtrl *searchInput_;
+	wxPanel *searchResults_;
+	wxBoxSizer *searchResultsSizer_;
 	
 	void RefreshFeed();
 	void OnPostClick(wxCommandEvent & /*event*/);
 	void OnLogoutClick(wxCommandEvent & /*event*/);
+	void RefreshSearch();
+	void OnSearchText(wxCommandEvent & /*event*/);
+	void ToggleFollow(const std::string &username, bool currentlyFollowed);
 };

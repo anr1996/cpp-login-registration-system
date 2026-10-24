@@ -1,6 +1,7 @@
 #include "appConstants.hpp"
 #include "homePanel.hpp"
 #include "mainFrame.hpp"
+#include "userSummary.hpp"
 #include <cctype>
 #include <exception>
 #include <iostream>
@@ -87,10 +88,30 @@ HomePanel::HomePanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), 
 	feedSizer_ = new wxBoxSizer(wxVERTICAL);
 	feed_->SetSizer(feedSizer_);
 
+	auto* searchCard = new wxPanel(scrollBar_, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);
+	searchCard->SetBackgroundColour(wxColour(176, 34, 12));
+	searchCard->SetMinSize(wxSize(500, -1));
 
-	auto* inner = new wxBoxSizer(wxVERTICAL);
-	inner->Add(welcomeLabel_, 0, wxALL | wxALIGN_RIGHT, 30);
+	auto* searchLabel = new wxStaticText(searchCard, wxID_ANY, "Search for people:");
+	searchLabel->SetForegroundColour(wxColour(255, 255, 255));
+
+	searchInput_ = new wxTextCtrl(searchCard, wxID_ANY, "");
+
+	searchResults_ = new wxPanel(searchCard, wxID_ANY);
+	searchResults_->SetBackgroundColour(wxColour(176, 34, 12));
+	searchResultsSizer_ = new wxBoxSizer(wxVERTICAL);
+	searchResults_->SetSizer(searchResultsSizer_);
+
+	auto* searchCardSizer = new wxBoxSizer(wxVERTICAL);
+	searchCardSizer->Add(searchLabel, 0, wxALL, definedVar::BORDER_WIDTH);
+	searchCardSizer->Add(searchInput_, 0, wxLEFT | wxRIGHT | wxEXPAND, definedVar::BORDER_WIDTH);	
+	searchCardSizer->Add(searchResults_, 0, wxALL | wxEXPAND, definedVar::BORDER_WIDTH);
+	searchCard->SetSizer(searchCardSizer);
+	searchCard->Fit();	
+
+	auto* inner = new wxBoxSizer(wxVERTICAL);	
 	inner->Add(postCard, 0, wxALIGN_CENTER_HORIZONTAL);
+	inner->Add(searchCard, 0, wxALIGN_CENTER_HORIZONTAL | wxTOP, 10);
 	inner->Add(feed_, 0, wxALIGN_CENTER_HORIZONTAL | wxALL, 10);
 
 
@@ -108,6 +129,7 @@ HomePanel::HomePanel(wxWindow *parent, MainFrame *mainFrame) : wxPanel(parent), 
 	
 	logoutBtn->Bind(wxEVT_BUTTON, &HomePanel::OnLogoutClick, this);
 	postBtn->Bind(wxEVT_BUTTON, &HomePanel::OnPostClick, this);
+	searchInput_->Bind(wxEVT_TEXT, &HomePanel::OnSearchText, this);
 }
 
 void HomePanel::RefreshFeed() {
@@ -136,7 +158,7 @@ void HomePanel::RefreshFeed() {
 				auto* userStamp = new wxPanel(card, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxBORDER_SIMPLE);	
 				userStamp->SetBackgroundColour(wxColour(definedVar::GetPanelColor()));
 				
-				auto* username = new wxStaticText(userStamp, wxID_ANY, wxString::FromUTF8(user->get_username()));
+				auto* username = new wxStaticText(userStamp, wxID_ANY, wxString::FromUTF8(post.author));
 				username->SetForegroundColour(wxColour(0, 0, 0));	
 				auto* time = new wxStaticText(userStamp, wxID_ANY, wxString::FromUTF8(post.createdAt) + " UTC");
 				time->SetForegroundColour(wxColour(0, 0, 0));
@@ -207,11 +229,12 @@ void HomePanel::RefreshForCurrentUser() {
 	welcomeLabel_->SetLabel(username);
 	
 	/*
-	The label's text changed length so ask the sizer to recomputer the layout
+	The label's text changed length so ask the sizer to recompute the layout
 	(otherwise the old sizing could clip or misplace the new text).
 	*/
 	Layout();
 	
+	searchInput_->Clear();
 	RefreshFeed();
 	scrollBar_->Scroll(0,0);
 }
@@ -252,3 +275,87 @@ void HomePanel::OnPostClick(wxCommandEvent & /*event*/) {
 
 	Layout();
 }
+
+void HomePanel::OnSearchText(wxCommandEvent & /*event*/) {
+	RefreshSearch();
+}
+
+void HomePanel::RefreshSearch() {
+
+	searchResults_->Freeze();
+	searchResultsSizer_->Clear(true);
+
+	const userSettings::userAccount* user = mainFrame_->GetCurrentUser();
+	wxString typed = searchInput_->GetValue();
+	typed.Trim().Trim(false);
+	
+	if (user != nullptr && !typed.empty()) {
+		try {
+			const std::vector<userSettings::UserSummary> found = MainFrame::getRegistry().search_users(
+				user->get_username(), typed.ToStdString(), definedVar::MAX_USER_RESULTS);
+	
+			if (found.empty()) {
+				auto *none = new wxStaticText(searchResults_, wxID_ANY, "NO users found.");
+				none->SetForegroundColour(wxColour(255, 255, 255));
+				
+				searchResultsSizer_->Add(none, 0, wxALL, 3);
+			}
+		
+			for (const userSettings::UserSummary &summary : found) {
+				auto* name = new wxStaticText(searchResults_, wxID_ANY, wxString::FromUTF8(summary.username));
+				name->SetForegroundColour(wxColour(255, 255, 255));
+				
+				auto *button = new wxButton(searchResults_, wxID_ANY, summary.isFollowed ? "Unfollow" : "Follow");
+				
+				// Copy what the lambda needs: 'summary' won't exist when the click happens.
+				const std::string username = summary.username;
+				const bool followed = summary.isFollowed;
+				button->Bind(wxEVT_BUTTON, [this, username, followed](wxCommandEvent &) {
+					// Deferred: the click rebuilds this list, which deletes this very button.
+					CallAfter([this, username, followed]() {ToggleFollow(username, followed); });
+				});
+
+				auto *row = new wxBoxSizer(wxHORIZONTAL);
+				row->Add(name, 1, wxALIGN_CENTER_VERTICAL | wxLEFT, 5);
+				row->Add(button, 0, wxALL, 3);
+				searchResultsSizer_->Add(row, 0, wxEXPAND);
+			}
+		} catch (const std::exception &e) {
+			std::cerr << "User search error: " << e.what() << "\n";
+			auto* err = new wxStaticText(searchResults_, wxID_ANY, "Could not search users.");
+			err->SetForegroundColour(wxColour(255, 255, 255));
+			searchResultsSizer_->Add(err, 0, wxALL, 3);
+		}
+
+		searchResultsSizer_->Layout();
+		searchResults_->GetParent()->Layout();
+		searchResults_->GetParent()->Fit();
+		scrollBar_->Layout();
+		scrollBar_->FitInside();
+		searchResults_->Thaw();		
+
+	}
+
+}
+
+void HomePanel::ToggleFollow(const std::string &username, bool currentlyFollowed) {
+	const userSettings::userAccount* user = mainFrame_->GetCurrentUser();
+	if (user == nullptr) {
+		return;
+	}
+
+	try {
+		if (currentlyFollowed) {
+			MainFrame::getRegistry().unfollow(user->get_username(), username);
+		} else {
+			MainFrame::getRegistry().follow(user->get_username(), username);
+		}
+		 
+	} catch (const std::exception &e) {
+		std::cerr << "Follow error: " << e.what() << "\n";
+	}
+
+	RefreshSearch(); // This will flip the button label
+	RefreshFeed(); // The feed will depend on who you follow.
+}
+

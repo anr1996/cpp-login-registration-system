@@ -137,10 +137,15 @@ public:
 	
 	std::vector<userSettings::Post> get_posts(std::string_view username, int limit) override {
 		pqxx::work txn(conn_);
+		
+		// Posts by this user, plus posts by anyone this user follows.
 		const pqxx::result rows = txn.exec(
-			"SELECT p.body, to_char(p.created_at, 'YYYY-MM-DD HH24:MI') "
+			"SELECT u.username::text, p.body, to_char(p.created_at, 'YYYY-MM-DD HH24:MI') "
 			"FROM posts p JOIN users u ON u.id = p.user_id "
-			"WHERE u.username = $1::citext "
+			"WHERE p.user_id = (SELECT id FROM users WHERE username = $1::citext) "
+			"	OR p.user_id IN (SELECT f.followee_id FROM follows f "
+			"		JOIN users me ON me.id = f.follower_id "
+			"		WHERE me.username = $1::citext) "
 			"ORDER BY p.created_at DESC, p.id DESC "
 			"LIMIT $2",
 			pqxx::params{std::string(username), limit});
@@ -149,11 +154,69 @@ public:
 		posts.reserve(rows.size());
 		for (const auto& row : rows) {
 			posts.push_back(userSettings::Post{
-				.body = row[0].as<std::string>(), 
-				.createdAt = row[1].as<std::string>()});
+				.author = row[0].as<std::string>(),
+				.body = row[1].as<std::string>(), 
+				.createdAt = row[2].as<std::string>()});
 		}
 		return posts;
-	} 
+
+	}
+
+	std::vector<userSettings::UserSummary> search_users(std::string_view viewer, std::string_view prefix, int limit) override {
+		pqxx::work txn(conn_);
+		const pqxx::result rows = txn.exec(
+			"SELECT u.username::text, "
+			"	EXISTS (SELECT 1 FROM follows f "
+			"		WHERE f.followee_id = u.id "
+			"			AND f.follower_id = (SELECT id FROM users WHERE username = $1::citext)) "
+			"FROM users u "
+			"WHERE u.username::text ILIKE $2 || '%' "
+			"	AND u.username <> $1::citext "
+			"ORDER BY u.username::text "
+			"LIMIT $3",
+			pqxx::params{std::string(viewer), std::string(prefix), limit});	
+	
+		std::vector<userSettings::UserSummary> users;
+		users.reserve(rows.size());
+		for (const auto& row : rows) {
+			users.push_back(userSettings::UserSummary{
+			.username = row[0].as<std::string>(),
+			.isFollowed = row[1].as<bool>()});
+		}
+		return users;
+	}
+
+	
+	bool follow(std::string_view follower, std::string_view followee) override {
+		pqxx::work txn(conn_);
+		/*
+		INSERT .. SELECT will look up both ids by username in one statement.
+		// ON CONFLICT DO NOTHING makes following twice harmless.
+		*/
+		txn.exec(
+			"INSERT INTO follows (follower_id, followee_id) "
+			"SELECT a.id, b.id FROM users a, users b "
+			"WHERE a.username = $1::citext AND b.username = $2::citext AND a.id <> b.id "
+			"ON CONFLICT DO NOTHING",
+
+			pqxx::params{std::string(follower), std::string(followee)});
+		txn.commit();
+		return true;
+	}
+
+	bool unfollow(std::string_view follower, std::string_view followee) override {
+		pqxx::work txn(conn_);
+		const pqxx::result removed = txn.exec(
+			"DELETE FROM follows "
+			"WHERE follower_id = (SELECT id FROM users WHERE username = $1::citext) "
+			" AND followee_id = (SELECT id FROM users WHERE username = $2::citext) "
+			"RETURNING follower_id",
+			pqxx::params{std::string(follower), std::string(followee)});
+		txn.commit();
+		return !removed.empty();
+		
+	}
+
 
 	std::vector<std::string> search_cities(std::string_view prefix, int limit) override {
 		pqxx::work txn(conn_);

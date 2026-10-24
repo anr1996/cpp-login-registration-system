@@ -2,6 +2,7 @@
 
 #include "post.hpp"
 #include "userAccount.hpp"
+#include "userSummary.hpp"
 #include <optional>
 #include <string>
 #include <string_view>
@@ -43,8 +44,17 @@ public:
 	// Saves a new post for the given username. Returns false if the username doesn't exist (nothing is saved in that case).	
 	virtual bool create_post(std::string_view username, std::string body) = 0;
 
-	// Returns up to 'limit' posts by this user, newest first.
+	// Returns up to 'limit' posts from this user and the users they follow,, newest first.
 	virtual std::vector<userSettings::Post> get_posts(std::string_view username, int limit) = 0;
+	
+	// Users whose username starts with 'prefix' (case-insensitive), excluding 'viewer'.
+	virtual std::vector<userSettings::UserSummary> search_users(std::string_view viewer, std::string_view prefix, int limit) = 0;
+	
+	// Makes 'follower' follow 'followee'. Returns false if either user doesn't exist or they are the same.
+	virtual bool follow(std::string_view follower, std::string_view followee) = 0;
+
+	// Removes the follow. Returns false if there was nothing to remove.
+	virtual bool unfollow(std::string_view follower, std::string_view followee) = 0;
 	
 	// Returns up to 'limit' city labels starting with 'prefix' (case-insensitive).
 	virtual std::vector<std::string> search_cities(std::string_view prefix, int limit) = 0;
